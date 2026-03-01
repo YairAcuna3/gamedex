@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String?
+  description String?
+  photo       String?
+  games       Game[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Game {
+  id                 String      @id @default(cuid())
+  name               String
+  description        String?
+  systemRequirements String?     @db.Text
+  releaseDate        DateTime?
+  image              String?
+  developer          String?
+  publisher          String?
+  platform           String?
+  singleplayer       Boolean     @default(false)
+  multiplayer        Boolean     @default(false)
+  nPlayers           Int?
+  progress           Progress    @default(UNPLAYED)
+  notes              String?     @db.Text
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags               GameTag[]
+  awards             GameAward[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model Tag {
+  id    String    @id @default(cuid())
+  name  String    @unique
+  games GameTag[]
+}
+
+model GameTag {
+  id     String @id @default(cuid())
+  gameId String
+  tagId  String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, tagId])
+  @@index([gameId])
+  @@index([tagId])
+}
+
+model Award {
+  id         String      @id @default(cuid())
+  code       AwardCode   @unique
+  name       String
+  scope      Scope
+  gameAwards GameAward[]
+}
+
+model AwardPeriod {
+  id         String      @id @default(cuid())
+  year       Int
+  month      Int?
+  gameAwards GameAward[]
+
+  @@unique([year, month])
+}
+
+model GameAward {
+  id          String      @id @default(cuid())
+  gameId      String
+  awardId     String
+  periodId    String
+  receiveDate DateTime    @default(now())
+  game        Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  award       Award       @relation(fields: [awardId], references: [id], onDelete: Cascade)
+  period      AwardPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@unique([awardId, periodId])
+  @@index([gameId])
+}
+
+enum Progress {
+  IN_PROGRESS
+  COMPLETE
+  PLATINUM
+  PLAYED
+  UNPLAYED
+}
+
+enum AwardCode {
+  GOLD
+  SILVER
+  BRONZE
+  GOTY
+}
+
+enum Scope {
+  MONTHLY
+  YEARLY
+}
