@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
@@ -20,7 +21,14 @@ export default function Navbar({ user }: NavbarProps) {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center gap-4 sm:gap-8">
-                            <Link href="/games" className="text-xl sm:text-2xl font-bold text-accent">
+                            <Link href="/games" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-accent">
+                                <Image
+                                    src="/img/icon.png"
+                                    alt="Gamedex Logo"
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8"
+                                />
                                 Gamedex
                             </Link>
                             <div className="flex gap-2 sm:gap-4">

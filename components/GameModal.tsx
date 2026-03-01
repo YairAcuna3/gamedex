@@ -79,6 +79,15 @@ export default function GameModal({ game, onClose }: GameModalProps) {
         }
     }, [game]);
 
+    useEffect(() => {
+        // Ajustar altura de textareas cuando cambia el contenido
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach((textarea) => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        });
+    }, [formData.description, formData.systemRequirements, formData.notes]);
+
     const hasChanges = () => {
         if (!initialData) return false;
         return JSON.stringify(formData) !== JSON.stringify(initialData);
@@ -166,9 +175,18 @@ export default function GameModal({ game, onClose }: GameModalProps) {
                             <label className="block text-sm font-medium mb-2">Descripción</label>
                             <textarea
                                 value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="input resize-none"
+                                onChange={(e) => {
+                                    setFormData({ ...formData, description: e.target.value });
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                }}
+                                className="input resize-none overflow-hidden"
                                 rows={3}
+                                onInput={(e) => {
+                                    const target = e.target as HTMLTextAreaElement;
+                                    target.style.height = 'auto';
+                                    target.style.height = target.scrollHeight + 'px';
+                                }}
                             />
                         </div>
 
@@ -239,9 +257,18 @@ export default function GameModal({ game, onClose }: GameModalProps) {
                             <label className="block text-sm font-medium mb-2">Requisitos del Sistema</label>
                             <textarea
                                 value={formData.systemRequirements}
-                                onChange={(e) => setFormData({ ...formData, systemRequirements: e.target.value })}
-                                className="input resize-none"
+                                onChange={(e) => {
+                                    setFormData({ ...formData, systemRequirements: e.target.value });
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                }}
+                                className="input resize-none overflow-hidden"
                                 rows={3}
+                                onInput={(e) => {
+                                    const target = e.target as HTMLTextAreaElement;
+                                    target.style.height = 'auto';
+                                    target.style.height = target.scrollHeight + 'px';
+                                }}
                             />
                         </div>
 
@@ -338,10 +365,19 @@ export default function GameModal({ game, onClose }: GameModalProps) {
                             <label className="block text-sm font-medium mb-2">Notas</label>
                             <textarea
                                 value={formData.notes}
-                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                className="input resize-none"
+                                onChange={(e) => {
+                                    setFormData({ ...formData, notes: e.target.value });
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                }}
+                                className="input resize-none overflow-hidden"
                                 rows={4}
                                 placeholder="Notas personales sobre el juego..."
+                                onInput={(e) => {
+                                    const target = e.target as HTMLTextAreaElement;
+                                    target.style.height = 'auto';
+                                    target.style.height = target.scrollHeight + 'px';
+                                }}
                             />
                         </div>
 
