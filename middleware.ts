@@ -1,5 +1,23 @@
-export { auth as middleware } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const token =
+    request.cookies.get("authjs.session-token") ||
+    request.cookies.get("__Secure-authjs.session-token");
+
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: ["/games/:path*", "/profile/:path*"],
+  matcher: [
+    "/games/:path*",
+    "/profile/:path*",
+    "/awards/:path*",
+    "/leaderboard/:path*",
+  ],
 };
