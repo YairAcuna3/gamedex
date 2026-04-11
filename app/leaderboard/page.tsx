@@ -29,21 +29,23 @@ export default function LeaderboardPage() {
         // Filtrar juegos con premios y ordenar por cantidad
         const gamesWithAwards = data
             .filter((game: any) => game.awards && game.awards.length > 0)
-            .map((game: any) => ({
-                ...game,
-                totalAwards: game.awards.length,
-                goldCount: game.awards.filter((a: any) => a.award.code === "GOLD").length,
-                silverCount: game.awards.filter((a: any) => a.award.code === "SILVER").length,
-                bronzeCount: game.awards.filter((a: any) => a.award.code === "BRONZE").length,
-                gotyCount: game.awards.filter((a: any) => a.award.code === "GOTY").length,
-            }))
-            .sort((a: any, b: any) => {
-                // Ordenar por GOTY primero, luego por total de premios
-                if (b.gotyCount !== a.gotyCount) {
-                    return b.gotyCount - a.gotyCount;
-                }
-                return b.totalAwards - a.totalAwards;
-            });
+            .map((game: any) => {
+                const gotyCount = game.awards.filter((a: any) => a.award.code === "GOTY").length;
+                const goldCount = game.awards.filter((a: any) => a.award.code === "GOLD").length;
+                const silverCount = game.awards.filter((a: any) => a.award.code === "SILVER").length;
+                const bronzeCount = game.awards.filter((a: any) => a.award.code === "BRONZE").length;
+                const score = gotyCount * 12 + goldCount * 3 + silverCount * 2 + bronzeCount * 1;
+                return {
+                    ...game,
+                    totalAwards: game.awards.length,
+                    goldCount,
+                    silverCount,
+                    bronzeCount,
+                    gotyCount,
+                    score,
+                };
+            })
+            .sort((a: any, b: any) => b.score - a.score);
 
         setGames(gamesWithAwards);
         setLoading(false);
@@ -64,9 +66,6 @@ export default function LeaderboardPage() {
             <Navbar user={session.user} />
             <div className="max-w-5xl mx-auto p-6">
                 <h1 className="text-3xl font-bold mb-6">🏆 Leaderboard</h1>
-                <p className="text-secondary mb-6">
-                    Juegos ordenados por cantidad de premios
-                </p>
 
                 {games.length === 0 ? (
                     <div className="card text-center text-secondary">
