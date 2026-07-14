@@ -15,6 +15,7 @@ export default function AwardsPage() {
     const [selectedAward, setSelectedAward] = useState("");
     const [year, setYear] = useState(new Date().getFullYear());
     const [month, setMonth] = useState<number | null>(new Date().getMonth() + 1);
+    const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
     const [showAwardModal, setShowAwardModal] = useState(false);
     const [editingAward, setEditingAward] = useState<any>(null);
@@ -24,6 +25,9 @@ export default function AwardsPage() {
         scope: "MONTHLY" as "MONTHLY" | "YEARLY",
     });
     const [gameSearch, setGameSearch] = useState("");
+    // Map of gameAwardId -> editing description state
+    const [editingDescriptions, setEditingDescriptions] = useState<Record<string, string>>({});
+    const [savingDescription, setSavingDescription] = useState<string | null>(null);
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -67,12 +71,14 @@ export default function AwardsPage() {
                 awardCode: selectedAward,
                 year,
                 month: isMonthly ? month : null,
+                description: description.trim() || null,
             }),
         });
 
         setLoading(false);
         setSelectedGame("");
         setSelectedAward("");
+        setDescription("");
         fetchGames();
     };
 
@@ -123,6 +129,33 @@ export default function AwardsPage() {
             method: "DELETE",
         });
 
+        fetchGames();
+    };
+
+    const startEditingDescription = (gameAward: any) => {
+        setEditingDescriptions((prev) => ({
+            ...prev,
+            [gameAward.id]: gameAward.description ?? "",
+        }));
+    };
+
+    const cancelEditingDescription = (id: string) => {
+        setEditingDescriptions((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+    };
+
+    const saveDescription = async (id: string) => {
+        setSavingDescription(id);
+        await fetch(`/api/awards/game/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description: editingDescriptions[id].trim() || null }),
+        });
+        setSavingDescription(null);
+        cancelEditingDescription(id);
         fetchGames();
     };
 
@@ -215,7 +248,7 @@ export default function AwardsPage() {
                                 )}
                                 {gameSearch && filteredGames.length > 0 && (
                                     <p className="text-sm text-secondary mt-1">
-                                        {filteredGames.length} juego{filteredGames.length !== 1 ? 's' : ''} encontrado{filteredGames.length !== 1 ? 's' : ''}
+                                        {filteredGames.length} juego{filteredGames.length !== 1 ? "s" : ""} encontrado{filteredGames.length !== 1 ? "s" : ""}
                                     </p>
                                 )}
                             </div>
@@ -268,6 +301,19 @@ export default function AwardsPage() {
                                 )}
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-medium mb-2">
+                                    Descripción <span className="text-secondary font-normal">(opcional)</span>
+                                </label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    className="input resize-none"
+                                    rows={3}
+                                    placeholder="¿Por qué merece este premio?"
+                                />
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={loading}
@@ -286,41 +332,96 @@ export default function AwardsPage() {
                             .filter((game: any) => game.awards && game.awards.length > 0)
                             .map((game: any) => (
                                 <div key={game.id} className="border border-border rounded p-4">
-                                    <h3 className="font-bold mb-2">{game.name}</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {game.awards.map((award: any) => (
-                                            <div
-                                                key={award.id}
-                                                className="flex items-center gap-2"
-                                            >
-                                                <span
-                                                    className={`px-3 py-1 rounded text-sm ${award.award.code === "GOLD"
-                                                        ? "bg-gold text-black"
-                                                        : award.award.code === "SILVER"
-                                                            ? "bg-silver text-black"
-                                                            : award.award.code === "BRONZE"
-                                                                ? "bg-bronze text-black"
-                                                                : "bg-goty text-white"
-                                                        }`}
-                                                >
-                                                    {award.award.code === "GOLD" && "🥇"}
-                                                    {award.award.code === "SILVER" && "🥈"}
-                                                    {award.award.code === "BRONZE" && "🥉"}
-                                                    {award.award.code === "GOTY" && "🏆"}
-                                                    {" "}
-                                                    {award.award.scope === "MONTHLY"
-                                                        ? `${award.period.month}/${award.period.year}`
-                                                        : award.period.year}
-                                                </span>
-                                                <button
-                                                    onClick={() => handleRemoveGameAward(award.id)}
-                                                    className="text-red-500 hover:text-red-400 text-lg font-bold"
-                                                    title="Quitar premio"
-                                                >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        ))}
+                                    <h3 className="font-bold mb-3">{game.name}</h3>
+                                    <div className="flex flex-col gap-3">
+                                        {game.awards.map((award: any) => {
+                                            const isEditing = award.id in editingDescriptions;
+                                            const isSaving = savingDescription === award.id;
+
+                                            return (
+                                                <div key={award.id} className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span
+                                                            className={`px-3 py-1 rounded text-sm ${award.award.code === "GOLD"
+                                                                ? "bg-gold text-black"
+                                                                : award.award.code === "SILVER"
+                                                                    ? "bg-silver text-black"
+                                                                    : award.award.code === "BRONZE"
+                                                                        ? "bg-bronze text-black"
+                                                                        : "bg-goty text-white"
+                                                                }`}
+                                                        >
+                                                            {award.award.code === "GOLD" && "🥇"}
+                                                            {award.award.code === "SILVER" && "🥈"}
+                                                            {award.award.code === "BRONZE" && "🥉"}
+                                                            {award.award.code === "GOTY" && "🏆"}
+                                                            {" "}
+                                                            {award.award.scope === "MONTHLY"
+                                                                ? `${award.period.month}/${award.period.year}`
+                                                                : award.period.year}
+                                                        </span>
+
+                                                        {!isEditing && (
+                                                            <button
+                                                                onClick={() => startEditingDescription(award)}
+                                                                className="text-xs text-secondary hover:text-white underline"
+                                                            >
+                                                                {award.description ? "Editar descripción" : "+ Añadir descripción"}
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            onClick={() => handleRemoveGameAward(award.id)}
+                                                            className="text-red-500 hover:text-red-400 text-lg font-bold ml-auto"
+                                                            title="Quitar premio"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Description display */}
+                                                    {!isEditing && award.description && (
+                                                        <p className="text-sm text-secondary pl-1 italic">
+                                                            {award.description}
+                                                        </p>
+                                                    )}
+
+                                                    {/* Inline description editor */}
+                                                    {isEditing && (
+                                                        <div className="flex gap-2 items-start mt-1">
+                                                            <textarea
+                                                                value={editingDescriptions[award.id]}
+                                                                onChange={(e) =>
+                                                                    setEditingDescriptions((prev) => ({
+                                                                        ...prev,
+                                                                        [award.id]: e.target.value,
+                                                                    }))
+                                                                }
+                                                                className="input resize-none flex-1 text-sm"
+                                                                rows={2}
+                                                                placeholder="Descripción del premio..."
+                                                                autoFocus
+                                                            />
+                                                            <div className="flex flex-col gap-1">
+                                                                <button
+                                                                    onClick={() => saveDescription(award.id)}
+                                                                    disabled={isSaving}
+                                                                    className="px-3 py-1 bg-accent text-white rounded text-sm hover:bg-accent-hover disabled:opacity-50"
+                                                                >
+                                                                    {isSaving ? "..." : "Guardar"}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => cancelEditingDescription(award.id)}
+                                                                    className="px-3 py-1 bg-tertiary text-white rounded text-sm hover:opacity-80"
+                                                                >
+                                                                    Cancelar
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ))}

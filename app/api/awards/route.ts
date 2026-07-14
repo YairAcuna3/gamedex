@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { gameId, awardCode, year, month } = await request.json();
+  const { gameId, awardCode, year, month, description } = await request.json();
 
   const game = await prisma.game.findFirst({
     where: { id: gameId, userId: session.user.id },
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
       gameId,
       awardId: award.id,
       periodId: period.id,
+      description: description ?? null,
     },
   });
 

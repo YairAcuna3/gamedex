@@ -59,6 +59,15 @@ export default function Navbar({ user }: NavbarProps) {
                                 >
                                     Leaderboard
                                 </Link>
+                                <Link
+                                    href="/history"
+                                    className={`px-3 py-2 rounded-md transition text-sm sm:text-base ${pathname === "/history"
+                                        ? "bg-accent text-white"
+                                        : "text-secondary hover:text-white"
+                                        }`}
+                                >
+                                    History
+                                </Link>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 sm:gap-4">

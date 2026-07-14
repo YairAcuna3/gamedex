@@ -2,6 +2,43 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const { description } = await request.json();
+
+  const gameAward = await prisma.gameAward.findUnique({
+    where: { id },
+    include: { game: true },
+  });
+
+  if (!gameAward) {
+    return NextResponse.json(
+      { error: "Premio no encontrado" },
+      { status: 404 },
+    );
+  }
+
+  if (gameAward.game.userId !== session.user.id) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
+
+  const updated = await prisma.gameAward.update({
+    where: { id },
+    data: { description: description ?? null },
+  });
+
+  return NextResponse.json(updated);
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },

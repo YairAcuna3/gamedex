@@ -84,6 +84,7 @@ model GameAward {
   gameId      String
   awardId     String
   periodId    String
+  description String?
   receiveDate DateTime    @default(now())
   game        Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
   award       Award       @relation(fields: [awardId], references: [id], onDelete: Cascade)
